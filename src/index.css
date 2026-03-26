@@ -58,3 +58,16 @@ body {
   border: 1px solid #2E4A60 !important;
   border-radius: 8px !important;
 }
+
+/* ═══ PRINT STYLES ═══ */
+@media print {
+  body { background: #fff !important; color: #111 !important; }
+  .no-print { display: none !important; }
+  .print-report { position: static !important; }
+  .print-report table { page-break-inside: auto; }
+  .print-report tr { page-break-inside: avoid; }
+  @page {
+    size: landscape;
+    margin: 0.4in;
+  }
+}

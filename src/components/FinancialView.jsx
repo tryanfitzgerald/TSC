@@ -49,6 +49,7 @@ function MetricCard({ label, value, color = 'text-white', subtext, warning }) {
 
 // ─── Main Component ───
 export default function FinancialView({ sites, activeSiteIdx, setActiveSiteIdx, updateSite, toggleStalls, toggleSiteEnabled, resetSite, financingType, setFinancingType }) {
+  const [showPrint, setShowPrint] = useState(false);
   const site = sites[activeSiteIdx];
   const update = (key, value) => updateSite(activeSiteIdx, key, value);
 
@@ -149,6 +150,344 @@ export default function FinancialView({ sites, activeSiteIdx, setActiveSiteIdx, 
   // Breakeven for all sites
   const cushionColor = (c) => c === null ? 'text-red-400' : c > 0.3 ? 'text-green-400' : c > 0.1 ? 'text-amber-400' : 'text-red-400';
   const cushionBg = (c) => c === null ? 'bg-red-900/20' : c > 0.3 ? 'bg-green-900/20' : c > 0.1 ? 'bg-amber-900/20' : 'bg-red-900/20';
+
+  // ─── Print handler ───
+  const handlePrint = () => {
+    setTimeout(() => { window.print(); }, 300);
+  };
+
+  // ─── PRINT REPORT OVERLAY ───
+  if (showPrint) {
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const S = { // print styles
+      page: { background: '#fff', color: '#111', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', minHeight: '100vh', padding: '0' },
+      header: { background: '#0D1B2A', color: '#fff', padding: '24px 32px', marginBottom: '0' },
+      section: { padding: '20px 32px', borderBottom: '1px solid #ddd' },
+      sectionTitle: { fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#0D1B2A', marginBottom: '12px', borderBottom: '2px solid #0D1B2A', paddingBottom: '4px' },
+      table: { width: '100%', borderCollapse: 'collapse', fontSize: '11px' },
+      th: { background: '#f0f2f5', padding: '6px 8px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #ccc', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+      thR: { background: '#f0f2f5', padding: '6px 8px', textAlign: 'right', fontWeight: 600, borderBottom: '2px solid #ccc', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' },
+      td: { padding: '5px 8px', borderBottom: '1px solid #e5e7eb' },
+      tdR: { padding: '5px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'right', fontFamily: 'monospace', fontVariantNumeric: 'tabular-nums' },
+      tdBold: { padding: '5px 8px', borderBottom: '2px solid #ccc', fontWeight: 700, background: '#f9fafb' },
+      tdBoldR: { padding: '5px 8px', borderBottom: '2px solid #ccc', fontWeight: 700, background: '#f9fafb', textAlign: 'right', fontFamily: 'monospace' },
+      grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' },
+      grid3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' },
+      card: { border: '1px solid #ddd', borderRadius: '6px', padding: '12px', textAlign: 'center' },
+      cardLabel: { fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666', marginBottom: '4px' },
+      cardValue: { fontSize: '18px', fontWeight: 700, fontFamily: 'monospace' },
+      cardSub: { fontSize: '9px', color: '#888', marginTop: '2px' },
+      green: { color: '#16a34a' },
+      red: { color: '#dc2626' },
+      amber: { color: '#d97706' },
+      teal: { color: '#0891b2' },
+      pageBreak: { pageBreakBefore: 'always' },
+    };
+
+    return (
+      <div style={S.page} className="print-report">
+        {/* ── CLOSE BUTTON (hidden in print) ── */}
+        <div className="no-print" style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999, display: 'flex', gap: 8 }}>
+          <button onClick={handlePrint} style={{ background: '#0D1B2A', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            Print / Save PDF
+          </button>
+          <button onClick={() => setShowPrint(false)} style={{ background: '#e5e7eb', color: '#333', border: 'none', borderRadius: 6, padding: '10px 16px', fontSize: 13, cursor: 'pointer' }}>
+            Close
+          </button>
+        </div>
+
+        {/* ════════ PAGE 1: COVER + PORTFOLIO SUMMARY ════════ */}
+        <div style={S.header}>
+          <div style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '0.02em' }}>Shorewood Charging Intelligence Platform</div>
+          <div style={{ fontSize: '13px', opacity: 0.7, marginTop: 4 }}>Tesla V4 Supercharger Portfolio — 10-Year Financial Pro Forma</div>
+          <div style={{ fontSize: '11px', opacity: 0.5, marginTop: 8 }}>Prepared {today} · Financing: {finLabel} · {activeSiteCount} active sites · {enabledSites.reduce((s,x) => s + x.posts, 0)} total stalls</div>
+        </div>
+
+        {/* Portfolio Summary */}
+        <div style={S.section}>
+          <div style={S.sectionTitle}>Portfolio Summary</div>
+          <div style={{ ...S.grid3, gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
+            <div style={S.card}>
+              <div style={S.cardLabel}>Total Equity Required</div>
+              <div style={{ ...S.cardValue, color: '#d97706' }}>{fmt.currency(totalEquity)}</div>
+              <div style={S.cardSub}>{finLabel} · {activeSiteCount} sites</div>
+            </div>
+            <div style={S.card}>
+              <div style={S.cardLabel}>Year 1 Portfolio NOI</div>
+              <div style={{ ...S.cardValue, color: totalY1NOI > 0 ? '#16a34a' : '#dc2626' }}>{fmt.currency(totalY1NOI)}</div>
+            </div>
+            <div style={S.card}>
+              <div style={S.cardLabel}>10-Year Portfolio NOI</div>
+              <div style={{ ...S.cardValue, color: '#16a34a' }}>{fmt.currencyM(total10YrNOI)}</div>
+            </div>
+            <div style={S.card}>
+              <div style={S.cardLabel}>§30C Tax Credits</div>
+              <div style={{ ...S.cardValue, color: '#0891b2' }}>{fmt.currency(totalCredits30C)}</div>
+              <div style={S.cardSub}>{daysTo30C} days to deadline</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Per-Site Summary Table */}
+        <div style={S.section}>
+          <div style={S.sectionTitle}>Per-Site Year 1 Overview</div>
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>Site</th>
+                <th style={S.thR}>Stalls</th>
+                <th style={S.thR}>Utilization</th>
+                <th style={S.thR}>Construction</th>
+                <th style={S.thR}>Net Revenue</th>
+                <th style={S.thR}>NOI</th>
+                <th style={S.thR}>NOI Margin</th>
+                <th style={S.thR}>Equity Req.</th>
+                <th style={S.thR}>Payback</th>
+                <th style={S.thR}>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sites.map((s, i) => {
+                const p = allProj[i];
+                const off = s.enabled === false || s.posts === 0;
+                const eq = fin(p.sourcesUses.equityRequired_SBA, p.sourcesUses.equityRequired_Conv, p.sourcesUses.equityRequired_None);
+                const pb = fin(p.breakeven.paybackYear_SBA, p.breakeven.paybackYear_Conv, p.breakeven.paybackYear_None);
+                return (
+                  <tr key={s.id} style={off ? { opacity: 0.35 } : {}}>
+                    <td style={{ ...S.td, fontWeight: 600 }}>{s.shortName}{off ? ' (OFF)' : ''}</td>
+                    <td style={S.tdR}>{s.posts}</td>
+                    <td style={S.tdR}>{s.year1Utilization.toFixed(2)} hrs</td>
+                    <td style={S.tdR}>{fmt.currency(s.constructionCost)}</td>
+                    <td style={S.tdR}>{off ? '—' : fmt.currency(p.yearly[0].annualNetRevenue)}</td>
+                    <td style={{ ...S.tdR, fontWeight: 600, color: p.yearly[0].noi > 0 ? '#16a34a' : '#dc2626' }}>{off ? '—' : fmt.currency(p.yearly[0].noi)}</td>
+                    <td style={S.tdR}>{off ? '—' : fmt.percent(p.yearly[0].noiMargin)}</td>
+                    <td style={S.tdR}>{off ? '—' : fmt.currency(eq)}</td>
+                    <td style={{ ...S.tdR, fontWeight: 600, color: pb && pb <= 5 ? '#16a34a' : '#d97706' }}>{off ? '—' : pb ? `Yr ${pb}` : '>10'}</td>
+                    <td style={{ ...S.td, fontSize: '10px' }}>{off ? 'Excluded' : s.grantStatus || '—'}</td>
+                  </tr>
+                );
+              })}
+              {/* Portfolio total row */}
+              <tr>
+                <td style={S.tdBold}>PORTFOLIO TOTAL</td>
+                <td style={S.tdBoldR}>{enabledSites.reduce((s,x) => s + x.posts, 0)}</td>
+                <td style={S.tdBoldR}>—</td>
+                <td style={S.tdBoldR}>{fmt.currency(enabledSites.reduce((s,x) => s + x.constructionCost, 0))}</td>
+                <td style={S.tdBoldR}>{fmt.currency(enabledSites.reduce((s,x) => s + allProj[x.idx].yearly[0].annualNetRevenue, 0))}</td>
+                <td style={{ ...S.tdBoldR, color: '#16a34a' }}>{fmt.currency(totalY1NOI)}</td>
+                <td style={S.tdBoldR}>—</td>
+                <td style={S.tdBoldR}>{fmt.currency(totalEquity)}</td>
+                <td style={S.tdBoldR}>—</td>
+                <td style={S.tdBold}>—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ════════ PAGE 2: SOURCES & USES ════════ */}
+        <div style={{ ...S.section, ...S.pageBreak }}>
+          <div style={S.sectionTitle}>Sources & Uses — All Sites ({finLabel})</div>
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>Metric</th>
+                {sites.map((s, i) => <th key={s.id} style={{ ...S.thR, color: SITE_COLORS[i], fontSize: '9px' }}>{s.shortName} ({s.posts}p)</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { label: 'Equipment Cost', fn: (p) => fmt.currency(p.sourcesUses.equipmentCost) },
+                { label: 'Install Cost', fn: (p, s) => fmt.currency((s.installCostPerStall || 50000) * s.posts) },
+                { label: 'Total Construction', fn: (p) => fmt.currency(p.sourcesUses.constructionCost), bold: true },
+                { label: 'ComEd Rebate', fn: (p) => p.sourcesUses.comedRebate ? `(${fmt.currency(p.sourcesUses.comedRebate)})` : '—' },
+                { label: '§30C Credits', fn: (p) => p.sourcesUses.grossCredits ? fmt.currency(p.sourcesUses.grossCredits) : '—' },
+                { label: 'Credit Proceeds', fn: (p) => p.sourcesUses.creditProceeds ? `(${fmt.currency(p.sourcesUses.creditProceeds)})` : '—' },
+                { label: 'Net Project Cost', fn: (p) => fmt.currency(p.sourcesUses.netProjectCost), bold: true },
+                ...(!isNone ? [
+                  { label: isSBA ? 'SBA Loan' : 'Conv. Loan', fn: (p) => fmt.currency(isSBA ? p.sourcesUses.sbaLoan : p.sourcesUses.convLoan) },
+                  { label: 'Annual Debt Service', fn: (p) => fmt.currency(isSBA ? p.sourcesUses.sbaDebtService : p.sourcesUses.convDebtService) },
+                  { label: 'Year 1 DCR', fn: (p) => (isSBA ? p.sourcesUses.sbaDCR_Y1 : p.sourcesUses.convDCR_Y1).toFixed(2) + 'x' },
+                ] : []),
+                { label: isNone ? 'Cash Required' : 'Equity Required', fn: (p) => fmt.currency(fin(p.sourcesUses.equityRequired_SBA, p.sourcesUses.equityRequired_Conv, p.sourcesUses.equityRequired_None)), bold: true },
+                { label: 'Year 1 NOI', fn: (p) => fmt.currency(p.yearly[0].noi) },
+                { label: 'NOI Margin', fn: (p) => fmt.percent(p.yearly[0].noiMargin) },
+                { label: 'Margin/kWh', fn: (p) => `$${p.yearly[0].grossMarginKwh.toFixed(3)}` },
+                { label: 'Payback Period', fn: (p) => { const pb = fin(p.breakeven.paybackYear_SBA, p.breakeven.paybackYear_Conv, p.breakeven.paybackYear_None); return pb ? `Year ${pb}` : '>10 Yrs'; } },
+                { label: '10-Yr Cum. CF', fn: (p) => { const cf = fin(p.cashFlows.cumulativeSBA, p.cashFlows.cumulativeConv, p.cashFlows.cumulativeNone); return fmt.currency(cf[9]); } },
+                { label: '10-Yr ROE', fn: (p) => { const roe = fin(p.cashFlows.ROE_SBA, p.cashFlows.ROE_Conv, p.cashFlows.ROE_None); return fmt.percent(roe[9]); }, bold: true },
+              ].map(({ label, fn, bold }, ri) => (
+                <tr key={ri}>
+                  <td style={bold ? S.tdBold : S.td}>{label}</td>
+                  {allProj.map((p, si) => <td key={si} style={bold ? S.tdBoldR : S.tdR}>{fn(p, sites[si])}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ════════ PAGE 3: 10-YEAR PROJECTIONS ════════ */}
+        <div style={{ ...S.section, ...S.pageBreak }}>
+          <div style={S.sectionTitle}>10-Year Cash Flow Projections ({finLabel})</div>
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>Year</th>
+                {enabledSites.map(s => <th key={s.id} style={{ ...S.thR, color: SITE_COLORS[s.idx], fontSize: '9px' }}>{s.shortName}</th>)}
+                <th style={{ ...S.thR, fontWeight: 800 }}>Portfolio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 10 }, (_, yr) => {
+                let total = 0;
+                return (
+                  <tr key={yr}>
+                    <td style={S.td}>Year {yr + 1}</td>
+                    {enabledSites.map(s => {
+                      const cf = fin(allProj[s.idx].cashFlows.sba, allProj[s.idx].cashFlows.conv, allProj[s.idx].cashFlows.none);
+                      total += cf[yr];
+                      return <td key={s.id} style={{ ...S.tdR, color: cf[yr] >= 0 ? '#16a34a' : '#dc2626' }}>{fmt.currency(cf[yr])}</td>;
+                    })}
+                    <td style={{ ...S.tdR, fontWeight: 700, color: total >= 0 ? '#16a34a' : '#dc2626' }}>{fmt.currency(total)}</td>
+                  </tr>
+                );
+              })}
+              {/* Cumulative row */}
+              <tr>
+                <td style={S.tdBold}>10-Yr Cumulative</td>
+                {enabledSites.map(s => {
+                  const cf = fin(allProj[s.idx].cashFlows.cumulativeSBA, allProj[s.idx].cashFlows.cumulativeConv, allProj[s.idx].cashFlows.cumulativeNone);
+                  return <td key={s.id} style={{ ...S.tdBoldR, color: cf[9] >= 0 ? '#16a34a' : '#dc2626' }}>{fmt.currency(cf[9])}</td>;
+                })}
+                <td style={{ ...S.tdBoldR, color: '#16a34a' }}>{fmt.currency(enabledSites.reduce((s,x) => {
+                  const cf = fin(allProj[x.idx].cashFlows.cumulativeSBA, allProj[x.idx].cashFlows.cumulativeConv, allProj[x.idx].cashFlows.cumulativeNone);
+                  return s + cf[9];
+                }, 0))}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        {/* ════════ PAGE 4: BREAKEVEN + ASSUMPTIONS ════════ */}
+        <div style={{ ...S.section, ...S.pageBreak }}>
+          <div style={S.grid2}>
+            {/* Breakeven */}
+            <div>
+              <div style={S.sectionTitle}>Breakeven Analysis</div>
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Site</th>
+                    <th style={S.thR}>BE Util</th>
+                    <th style={S.thR}>Model</th>
+                    <th style={S.thR}>Cushion</th>
+                    <th style={S.thR}>Payback</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sites.map((s, i) => {
+                    const be = allProj[i].breakeven;
+                    const beUtil = fin(be.breakevenUtil_SBA, be.breakevenUtil_Conv, be.breakevenUtil_None);
+                    const cushion = fin(be.cushionSBA, be.cushionConv, be.cushionNone);
+                    const pb = fin(be.paybackYear_SBA, be.paybackYear_Conv, be.paybackYear_None);
+                    const off = s.enabled === false || s.posts === 0;
+                    return (
+                      <tr key={s.id} style={off ? { opacity: 0.3 } : {}}>
+                        <td style={{ ...S.td, fontWeight: 600 }}>{s.shortName}</td>
+                        <td style={S.tdR}>{beUtil?.toFixed(2) ?? 'N/A'} hrs</td>
+                        <td style={S.tdR}>{s.year1Utilization.toFixed(2)} hrs</td>
+                        <td style={{ ...S.tdR, fontWeight: 600, color: cushion === null ? '#dc2626' : cushion > 0.3 ? '#16a34a' : cushion > 0.1 ? '#d97706' : '#dc2626' }}>
+                          {cushion !== null ? fmt.percent(cushion) : 'N/A'}
+                        </td>
+                        <td style={{ ...S.tdR, fontWeight: 600, color: pb && pb <= 5 ? '#16a34a' : '#d97706' }}>{pb ? `Yr ${pb}` : '>10'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Model Assumptions */}
+            <div>
+              <div style={S.sectionTitle}>Model Assumptions</div>
+              <table style={{ ...S.table, fontSize: '10px' }}>
+                <tbody>
+                  {[
+                    ['Customer Rate', `$${(site.customerRate).toFixed(2)}/kWh`],
+                    ['Rate Escalator', fmt.percent(site.chargeRateEscalator)],
+                    ['ComEd Rate', `$${(site.comedRate).toFixed(2)}/kWh`],
+                    ['ComEd Escalator', fmt.percent(site.comedEscalator)],
+                    ['Tesla LTSA Fee', `$${(site.teslaLTSAFee).toFixed(2)}/kWh`],
+                    ['Tesla Escalator', fmt.percent(site.teslaEscalator)],
+                    ['Billing Fee', fmt.percent(site.processingFee)],
+                    ['Demand Growth', fmt.percent(site.annualDemandGrowth)],
+                    ['Equipment Cost', fmt.currencyK(site.equipmentCost) + ' per 8 stalls'],
+                    ['Install Cost', fmt.currencyK(site.installCostPerStall) + ' per stall'],
+                    ['Ground Lease', `$${site.groundLease}/post/mo`],
+                    ['Parking Lease', `$${(site.parkingLease || 0)}/post/mo`],
+                    ['LTSA Floor', `$${site.ltsaFloor}/post/mo`],
+                    ['Operating Days', `${site.operatingDays}/yr`],
+                    ['kW per Post', `${site.kwPerPost} kW`],
+                    ...(!isNone ? [
+                      [isSBA ? 'SBA LTV' : 'Conv. LTV', fmt.percent(isSBA ? site.sbaLTV : site.convLTV)],
+                      [isSBA ? 'SBA Rate' : 'Conv. Rate', fmt.percent(isSBA ? site.sbaRate : site.convRate)],
+                      [isSBA ? 'SBA Term' : 'Conv. Term', `${isSBA ? site.sbaAmort : site.convAmort} yrs`],
+                    ] : []),
+                    ['§30C Credit', site.apply30C ? `${fmt.percent(site.creditRate30C)} (${site.sellCredits ? 'Transferable' : 'Direct'})` : 'Not Applied'],
+                  ].map(([label, value], ri) => (
+                    <tr key={ri}>
+                      <td style={{ ...S.td, color: '#666' }}>{label}</td>
+                      <td style={{ ...S.tdR, fontWeight: 500 }}>{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* ════════ PAGE 5: SITE-BY-SITE ASSUMPTIONS ════════ */}
+        <div style={{ ...S.section, ...S.pageBreak }}>
+          <div style={S.sectionTitle}>Site-by-Site Configuration</div>
+          <table style={S.table}>
+            <thead>
+              <tr>
+                <th style={S.th}>Parameter</th>
+                {sites.map((s, i) => <th key={s.id} style={{ ...S.thR, color: SITE_COLORS[i], fontSize: '9px' }}>{s.shortName}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { label: 'Status', fn: (s) => s.enabled === false ? 'OFF' : 'Active' },
+                { label: 'Stalls', fn: (s) => s.posts },
+                { label: 'Address', fn: (s) => s.address, left: true },
+                { label: 'County', fn: (s) => s.county },
+                { label: 'Y1 Utilization', fn: (s) => s.year1Utilization.toFixed(2) + ' hrs' },
+                { label: 'Construction Cost', fn: (s) => fmt.currency(s.constructionCost) },
+                { label: 'Equipment', fn: (s) => fmt.currencyK(s.equipmentCost || 500000) },
+                { label: 'Install/Stall', fn: (s) => fmt.currencyK(s.installCostPerStall || 50000) },
+                { label: 'ComEd Rebate', fn: (s) => s.comedRebate ? fmt.currency(s.comedRebate) : '—' },
+                { label: '§30C Applied', fn: (s) => s.apply30C ? `Yes (${fmt.percent(s.creditRate30C)})` : 'No' },
+                { label: 'Credits Transferable', fn: (s) => s.sellCredits ? 'Yes' : 'No' },
+                { label: 'Grant Status', fn: (s) => s.grantStatus || '—' },
+                { label: 'Notes', fn: (s) => s.notes || '—', left: true },
+              ].map(({ label, fn, left }, ri) => (
+                <tr key={ri}>
+                  <td style={{ ...S.td, fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</td>
+                  {sites.map((s, si) => <td key={si} style={left ? { ...S.td, fontSize: '9px' } : S.tdR}>{fn(s)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ════════ FOOTER ════════ */}
+        <div style={{ padding: '16px 32px', borderTop: '2px solid #0D1B2A', fontSize: '9px', color: '#888', display: 'flex', justifyContent: 'space-between' }}>
+          <span>Shorewood Charging Intelligence Platform · Confidential</span>
+          <span>{today}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -293,6 +632,9 @@ export default function FinancialView({ sites, activeSiteIdx, setActiveSiteIdx, 
             </button>
             <button onClick={exportCSV} className="w-full px-3 py-1.5 text-[11px] text-muted hover:text-white bg-navy-800 hover:bg-navy-700 rounded transition-colors">
               Export All Sites CSV
+            </button>
+            <button onClick={() => setShowPrint(true)} className="w-full px-3 py-1.5 text-[11px] font-medium text-navy-900 bg-accent-gold hover:bg-accent-gold/90 rounded transition-colors">
+              Print Report
             </button>
           </div>
 
