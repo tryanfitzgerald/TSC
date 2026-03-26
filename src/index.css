@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0D1B2A;
+  color: #FFFFFF;
+  min-height: 100vh;
+}
+
+/* Leaflet overrides for dark theme */
+.leaflet-container { background: #0D1B2A; }
+.leaflet-popup-content-wrapper { background: #1A2E42; color: #fff; border-radius: 8px; }
+.leaflet-popup-tip { background: #1A2E42; }
+.leaflet-popup-content { margin: 12px; }
+.leaflet-control-zoom a { background: #1A2E42 !important; color: #8BAFC0 !important; border-color: #2E4A60 !important; }
+.leaflet-control-attribution { background: rgba(13,27,42,0.8) !important; color: #8BAFC0 !important; }
+.leaflet-control-attribution a { color: #00B4D8 !important; }
+
+/* Marker cluster overrides */
+.marker-cluster-small { background-color: rgba(0,180,216,0.3); }
+.marker-cluster-small div { background-color: rgba(0,180,216,0.6); color: #fff; }
+.marker-cluster-medium { background-color: rgba(244,162,97,0.3); }
+.marker-cluster-medium div { background-color: rgba(244,162,97,0.6); color: #fff; }
+.marker-cluster-large { background-color: rgba(230,57,70,0.3); }
+.marker-cluster-large div { background-color: rgba(230,57,70,0.6); color: #fff; }
+
+/* Pulsing animation for competitor alert marker */
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(230,57,70,0.7); }
+  70% { box-shadow: 0 0 0 15px rgba(230,57,70,0); }
+  100% { box-shadow: 0 0 0 0 rgba(230,57,70,0); }
+}
+.pulse-marker { animation: pulse 2s infinite; border-radius: 50%; }
+
+/* Shorewood star marker */
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(244,162,97,0.6)); }
+  50% { filter: drop-shadow(0 0 8px rgba(244,162,97,0.9)); }
+}
+.shorewood-marker { animation: glow 3s ease-in-out infinite; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #0D1B2A; }
+::-webkit-scrollbar-thumb { background: #2E4A60; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #8BAFC0; }
+
+/* Tabular nums for financial data */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Tooltip styling for recharts */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #1A2E42 !important;
+  border: 1px solid #2E4A60 !important;
+  border-radius: 8px !important;
+}
